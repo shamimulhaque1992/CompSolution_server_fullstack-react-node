@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -14,12 +15,27 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
-
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "UnauthorizedError" });
+  }
+  const token = authHeader.split(" ")[1];
+  
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: "Forbidden Access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
 async function run() {
   try {
     await client.connect();
     const toolsCollections = client.db("comp-solution").collection("tools");
     const orderCollection = client.db("comp-solution").collection("orders");
+    const usersCollection = client.db("comp-solution").collection("users");
     // Get all product information
     app.get("/tools", async (req, res) => {
       const query = {};
@@ -36,10 +52,46 @@ async function run() {
       res.send(tool);
     });
 
+    app.get("/available", async (req, res) => {});
+
+    app.get("/order", verifyJWT, async (req, res) => {
+      const customeremail = req.query.customeremail;
+      const authorization = req.headers.authorization;
+      const decodedEmail = req.decoded.email;
+      if (customeremail == decodedEmail) {
+        const query = { customerEmail: customeremail };
+        const order = await orderCollection.find(query).toArray();
+        return res.send(order);
+      } else {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      console.log(authorization);
+    });
     app.post("/order", async (req, res) => {
       const order = req.body;
       const result = await orderCollection.insertOne(order);
       res.send(result);
+    });
+
+    app.put("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const filter = { email: email };
+      options = { upsert: true };
+      const updatedDoc = {
+        $set: user,
+      };
+      const result = await usersCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
+      const token = jwt.sign(
+        { email: email },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "1h" }
+      );
+      res.send({ result, token });
     });
   } finally {
   }
