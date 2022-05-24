@@ -21,7 +21,7 @@ function verifyJWT(req, res, next) {
     return res.status(401).send({ message: "UnauthorizedError" });
   }
   const token = authHeader.split(" ")[1];
-  
+
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
     if (err) {
       return res.status(403).send({ message: "Forbidden Access" });
@@ -73,6 +73,10 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/user", verifyJWT, async (req, res) => {
+      const users = await usersCollection.find().toArray();
+      res.send(users);
+    });
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -92,6 +96,17 @@ async function run() {
         { expiresIn: "1h" }
       );
       res.send({ result, token });
+    });
+
+    app.put("/user/admin/:email",verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const updatedDoc = {
+        $set: { role: "admin" },
+      };
+      const result = await usersCollection.updateOne(filter, updatedDoc);
+
+      res.send(result);
     });
   } finally {
   }
