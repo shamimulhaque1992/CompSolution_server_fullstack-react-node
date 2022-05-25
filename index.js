@@ -36,6 +36,19 @@ async function run() {
     const toolsCollections = client.db("comp-solution").collection("tools");
     const orderCollection = client.db("comp-solution").collection("orders");
     const usersCollection = client.db("comp-solution").collection("users");
+
+    const verifyAdmin = async (req, res, next) => {
+      const initiator = req.decoded.email;
+      const initiatorAccount = await usersCollection.findOne({
+        email: initiator,
+      });
+      if (initiatorAccount.role === "admin") {
+        next();
+      } else {
+        res.status(403).send({ message: "Forbidden access" });
+      }
+    };
+
     // Get all product information
     app.get("/tools", async (req, res) => {
       const query = {};
@@ -50,6 +63,12 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const tool = await toolsCollections.findOne(query);
       res.send(tool);
+    });
+
+    app.post("/tools", async (req, res) => {
+      const newProduct = req.body;
+      const result = await toolsCollections.insertOne(newProduct);
+      res.send(result);
     });
 
     app.get("/available", async (req, res) => {});
@@ -73,9 +92,15 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/user", verifyJWT, async (req, res) => {
+    app.get("/user", verifyJWT, verifyAdmin, async (req, res) => {
       const users = await usersCollection.find().toArray();
       res.send(users);
+    });
+    app.delete("/user/:email", verifyJWT,verifyAdmin, async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const result = await usersCollection.deleteOne(filter);
+      res.send(result);
     });
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -98,30 +123,23 @@ async function run() {
       res.send({ result, token });
     });
 
-    app.get('/admin/:email', async (req, res) => {
+    app.get("/admin/:email", async (req, res) => {
       const email = req.params.email;
-      const user= await usersCollection.findOne({ email: email });
+      const user = await usersCollection.findOne({ email: email });
       const isAdmin = user.role === "admin";
-      res.send({admin: isAdmin}) 
-    })
+      res.send({ admin: isAdmin });
+    });
 
-    app.put("/user/admin/:email", verifyJWT, async (req, res) => {
+    app.put("/user/admin/:email", verifyJWT,verifyAdmin, async (req, res) => {
       const email = req.params.email;
-      const initiator = req.decoded.email;
-      const initiatorAccount = await usersCollection.findOne({
-        email: initiator,
-      });
-      if (initiatorAccount.role === "admin") {
-        const filter = { email: email };
-        const updatedDoc = {
-          $set: { role: "admin" },
-        };
-        const result = await usersCollection.updateOne(filter, updatedDoc);
 
-        res.send(result);
-      }else{
-        res.status(403).send({message:"Forbidden access"})
-      }
+      const filter = { email: email };
+      const updatedDoc = {
+        $set: { role: "admin" },
+      };
+      const result = await usersCollection.updateOne(filter, updatedDoc);
+
+      res.send(result);
     });
   } finally {
   }
