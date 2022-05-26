@@ -202,7 +202,7 @@ async function run() {
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("This is Comp-Solution server running");
+  res.send("This is Comp-Solution server running fine");
 });
 
 app.listen(port, () => {
