@@ -128,7 +128,7 @@ async function run() {
       const filter = {_id: ObjectId(id)};
       const updatedDoc = {
         $set: {
-          paymentStatus: "Paid",
+          paymentStatus: payment.paymentStatus,
           transactionId: payment.transactionId
         }
       }
@@ -136,6 +136,30 @@ async function run() {
       const result = await paymentCollection.insertOne(payment);
       const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
       res.send(updatedDoc);
+    })
+
+
+    app.put('/status/:id', verifyJWT,verifyAdmin, async(req, res) =>{
+      const id  = req.params.id;
+      const status = req.body;
+      const filter = {_id: ObjectId(id)};
+      const updatedDoc = {
+        $set: {
+          paymentStatus: status.paymentStatus,
+        }
+      }
+
+      const result = await paymentCollection.insertOne(payment);
+      const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+      res.send(updatedDoc);
+    })
+
+
+    app.delete('/orders/:id', verifyJWT, async(req, res) =>{
+      const id = req.params.id;
+      const query = {_id: ObjectId(id)};
+      const result = await orderCollection.deleteOne(query);
+      res.send(result);
     })
 
 
