@@ -86,8 +86,6 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/available", async (req, res) => {});
-
     app.get("/order", verifyJWT, async (req, res) => {
       const customeremail = req.query.customeremail;
       const authorization = req.headers.authorization;
@@ -107,6 +105,13 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const orders = await orderCollection.findOne(query);
       res.send(orders);
+    });
+
+    app.get("/orders", verifyJWT, verifyAdmin, async (req, res) => {
+      const query = {};
+      const orders = await orderCollection.find(query);
+      const results = await orders.toArray();
+      res.send(results);
     });
 
     app.get("/order/availabel", verifyJWT, verifyAdmin, async (req, res) => {
@@ -164,12 +169,19 @@ async function run() {
       const users = await usersCollection.find().toArray();
       res.send(users);
     });
+    app.get("/user/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const users = await usersCollection.find(filter).toArray();
+      res.send(users);
+    });
     app.delete("/user/:email", verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
       const result = await usersCollection.deleteOne(filter);
       res.send(result);
     });
+
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -191,6 +203,29 @@ async function run() {
       res.send({ result, token });
     });
 
+    app.put("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const status = req.body;
+      console.log(status);
+      const filter = { email: email };
+      options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          name: status.name,
+          email: status.email,
+          address: status.address,
+          phone: status.phone,
+          mstatus: status.mstatus,
+        },
+      };
+      const updatedOrder = await usersCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
+      res.send(updatedDoc);
+    });
+
     app.get("/admin/:email", async (req, res) => {
       const email = req.params.email;
       const user = await usersCollection.findOne({ email: email });
@@ -210,7 +245,14 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/reviews", verifyJWT, async (req, res) => {
+    app.get("/reviews",  async (req, res) => {
+      const query = {};
+      const filter = await reviewCollection.find(query);
+      const results = await filter.toArray();
+      res.send(results);
+    });
+
+    app.post("/reviews",  async (req, res) => {
       const newReview = req.body;
       const result = await reviewCollection.insertOne(newReview);
       res.send(result);
