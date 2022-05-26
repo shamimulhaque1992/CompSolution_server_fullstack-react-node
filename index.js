@@ -5,7 +5,7 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 app.use(cors());
 app.use(express.json());
@@ -52,17 +52,16 @@ async function run() {
       }
     };
 
-    app.post('/create-payment-intent', verifyJWT, async(req, res) =>{
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const order = req.body;
-      const price = order.productPrice
-;
-      const amount = price*100;
+      const price = order.productPrice;
+      const amount = price * 100;
       const paymentIntent = await stripe.paymentIntents.create({
-        amount : amount,
-        currency: 'usd',
-        payment_method_types:['card']
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
       });
-      res.send({clientSecret: paymentIntent.client_secret})
+      res.send({ clientSecret: paymentIntent.client_secret });
     });
 
     // Get all product information
@@ -103,71 +102,69 @@ async function run() {
       console.log(authorization);
     });
 
-    app.get('/orders/:id', verifyJWT, async(req, res) =>{
+    app.get("/orders/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
-      const query = {_id: ObjectId(id)};
+      const query = { _id: ObjectId(id) };
       const orders = await orderCollection.findOne(query);
       res.send(orders);
-    })
+    });
 
-    app.get('/order/availabel', verifyJWT,verifyAdmin, async (req, res) => {
+    app.get("/order/availabel", verifyJWT, verifyAdmin, async (req, res) => {
       const query = {};
       const cursor = orderCollection.find(query);
       const orders = await cursor.toArray();
       res.send(orders);
-    })
+    });
     app.post("/order", async (req, res) => {
       const order = req.body;
       const result = await orderCollection.insertOne(order);
       res.send(result);
     });
 
-    app.put('/orders/:id', verifyJWT, async(req, res) =>{
-      const id  = req.params.id;
+    app.put("/orders/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
       const payment = req.body;
-      const filter = {_id: ObjectId(id)};
+      const filter = { _id: ObjectId(id) };
       const updatedDoc = {
         $set: {
           paymentStatus: payment.paymentStatus,
-          transactionId: payment.transactionId
-        }
-      }
+          transactionId: payment.transactionId,
+        },
+      };
 
       const result = await paymentCollection.insertOne(payment);
       const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
       res.send(updatedDoc);
-    })
+    });
 
-
-    app.put('/status/:id', verifyJWT,verifyAdmin, async(req, res) =>{
-      const id  = req.params.id;
+    app.put("/status/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
       const status = req.body;
-      const filter = {_id: ObjectId(id)};
+      const filter = { _id: ObjectId(id) };
       const updatedDoc = {
         $set: {
           paymentStatus: status.paymentStatus,
-        }
-      }
+        },
+      };
 
-      const result = await paymentCollection.insertOne(payment);
+      const result = await paymentCollection.updateOne(filter, updatedDoc);
       const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
       res.send(updatedDoc);
-    })
+    });
 
-
-    app.delete('/orders/:id', verifyJWT, async(req, res) =>{
+    app.delete("/orders/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id: ObjectId(id)};
+      console.log(id);
+      const query = { _id: ObjectId(id) };
       const result = await orderCollection.deleteOne(query);
       res.send(result);
-    })
-
+    });
 
     app.get("/user", verifyJWT, verifyAdmin, async (req, res) => {
       const users = await usersCollection.find().toArray();
       res.send(users);
     });
-    app.delete("/user/:email", verifyJWT,verifyAdmin, async (req, res) => {
+    app.delete("/user/:email", verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
       const result = await usersCollection.deleteOne(filter);
@@ -201,7 +198,7 @@ async function run() {
       res.send({ admin: isAdmin });
     });
 
-    app.put("/user/admin/:email", verifyJWT,verifyAdmin, async (req, res) => {
+    app.put("/user/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
 
       const filter = { email: email };
@@ -213,13 +210,11 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/reviews",verifyJWT, async (req, res) => {
+    app.post("/reviews", verifyJWT, async (req, res) => {
       const newReview = req.body;
       const result = await reviewCollection.insertOne(newReview);
       res.send(result);
     });
-
-
   } finally {
   }
 }
