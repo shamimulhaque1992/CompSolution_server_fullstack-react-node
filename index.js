@@ -126,6 +126,13 @@ async function run() {
       const results = await orders.toArray();
       res.send(results);
     });
+    app.get("/orders/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const orders = await orderCollection.find(query);
+      const results = await orders.toArray();
+      res.send(results);
+    });
 
     app.get("/order/availabel", verifyJWT, verifyAdmin, async (req, res) => {
       const query = {};
