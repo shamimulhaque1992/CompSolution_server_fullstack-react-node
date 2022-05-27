@@ -16,6 +16,8 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+// >>>>>>>>>>>Token verification>>>>>>>>>>>>>>>>>>>>>>>>>
 function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -33,6 +35,7 @@ function verifyJWT(req, res, next) {
 }
 async function run() {
   try {
+    //>>>>>>>>>>>>>>>>>>>>>> connection and collections>>>>>>>>>>>>>>
     await client.connect();
     const toolsCollections = client.db("comp-solution").collection("tools");
     const orderCollection = client.db("comp-solution").collection("orders");
@@ -40,6 +43,14 @@ async function run() {
     const paymentCollection = client.db("comp-solution").collection("payments");
     const reviewCollection = client.db("comp-solution").collection("reviews");
 
+
+
+
+
+
+
+
+    //>>>>>>>>>>>>>>>>>>>>>> admin verification>>>>>>>>>>>>>>>>>>>>>
     const verifyAdmin = async (req, res, next) => {
       const initiator = req.decoded.email;
       const initiatorAccount = await usersCollection.findOne({
@@ -52,6 +63,7 @@ async function run() {
       }
     };
 
+    //>>>>>>>>>>>>>>>>>>>>> Payment intent api>>>>>>>>>>>>>>>>>>>>>>>>
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const order = req.body;
       const price = order.productPrice;
@@ -64,7 +76,17 @@ async function run() {
       res.send({ clientSecret: paymentIntent.client_secret });
     });
 
-    // Get all product information
+
+
+
+
+
+
+
+
+
+
+    //>>>>>>>>>>>>>>>>> Product related api>>>>>>>>>>>>>>>>>>>>>
     app.get("/tools", async (req, res) => {
       const query = {};
       const cursor = toolsCollections.find(query);
@@ -86,6 +108,17 @@ async function run() {
       res.send(result);
     });
 
+
+
+
+
+
+
+
+
+
+
+    //>>>>>>>>>>>>>>>>> Order related api>>>>>>>>>>>>>>>>>>>>>>>
     app.get("/order", verifyJWT, async (req, res) => {
       const customeremail = req.query.customeremail;
       const authorization = req.headers.authorization;
@@ -120,6 +153,8 @@ async function run() {
       const orders = await cursor.toArray();
       res.send(orders);
     });
+
+
     app.post("/order", async (req, res) => {
       const order = req.body;
       const result = await orderCollection.insertOne(order);
@@ -165,6 +200,21 @@ async function run() {
       res.send(result);
     });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //>>>>>>>>>>>>>>>>>> user related api>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     app.get("/user", verifyJWT, verifyAdmin, async (req, res) => {
       const users = await usersCollection.find().toArray();
       res.send(users);
@@ -245,14 +295,26 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/reviews",  async (req, res) => {
+
+
+
+
+
+
+
+
+
+
+
+    //>>>>>>>>>>> reviews related api>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    app.get("/reviews", async (req, res) => {
       const query = {};
       const filter = await reviewCollection.find(query);
       const results = await filter.toArray();
       res.send(results);
     });
 
-    app.post("/reviews",  async (req, res) => {
+    app.post("/reviews", async (req, res) => {
       const newReview = req.body;
       const result = await reviewCollection.insertOne(newReview);
       res.send(result);
