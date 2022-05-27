@@ -43,13 +43,6 @@ async function run() {
     const paymentCollection = client.db("comp-solution").collection("payments");
     const reviewCollection = client.db("comp-solution").collection("reviews");
 
-
-
-
-
-
-
-
     //>>>>>>>>>>>>>>>>>>>>>> admin verification>>>>>>>>>>>>>>>>>>>>>
     const verifyAdmin = async (req, res, next) => {
       const initiator = req.decoded.email;
@@ -76,16 +69,6 @@ async function run() {
       res.send({ clientSecret: paymentIntent.client_secret });
     });
 
-
-
-
-
-
-
-
-
-
-
     //>>>>>>>>>>>>>>>>> Product related api>>>>>>>>>>>>>>>>>>>>>
     app.get("/tools", async (req, res) => {
       const query = {};
@@ -107,16 +90,13 @@ async function run() {
       const result = await toolsCollections.insertOne(newProduct);
       res.send(result);
     });
-
-
-
-
-
-
-
-
-
-
+    app.delete("/tools/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: ObjectId(id) };
+      const result = await toolsCollections.deleteOne(query);
+      res.send(result);
+    });
 
     //>>>>>>>>>>>>>>>>> Order related api>>>>>>>>>>>>>>>>>>>>>>>
     app.get("/order", verifyJWT, async (req, res) => {
@@ -153,7 +133,6 @@ async function run() {
       const orders = await cursor.toArray();
       res.send(orders);
     });
-
 
     app.post("/order", async (req, res) => {
       const order = req.body;
@@ -199,20 +178,6 @@ async function run() {
       const result = await orderCollection.deleteOne(query);
       res.send(result);
     });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     //>>>>>>>>>>>>>>>>>> user related api>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     app.get("/user", verifyJWT, verifyAdmin, async (req, res) => {
@@ -294,17 +259,6 @@ async function run() {
 
       res.send(result);
     });
-
-
-
-
-
-
-
-
-
-
-
 
     //>>>>>>>>>>> reviews related api>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     app.get("/reviews", async (req, res) => {
