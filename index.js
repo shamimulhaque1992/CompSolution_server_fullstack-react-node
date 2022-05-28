@@ -7,10 +7,7 @@ const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-app.use(cors(
-  origin:["http://localhost:3000",
-  "https://serene-shelf-91638.herokuapp.com"]
-));
+app.use(cors());
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.hqx62.mongodb.net/?retryWrites=true&w=majority`;
@@ -129,7 +126,7 @@ async function run() {
       const results = await orders.toArray();
       res.send(results);
     });
-    app.get("/orders/:email",  async (req, res) => {
+    app.get("/orders/:email", async (req, res) => {
       const email = req.params.email;
       console.log(email);
       const query = { customerEmail: email };
