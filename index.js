@@ -291,5 +291,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Lesting to port ${port}`);
+  console.log(`Lesting to ports ${port}`);
 });
