@@ -8,8 +8,8 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 app.use(cors(
-  origin:{"http://localhost:3000",
-  "https://serene-shelf-91638.herokuapp.com"}
+  origin:["http://localhost:3000",
+  "https://serene-shelf-91638.herokuapp.com"]
 ));
 app.use(express.json());
 
